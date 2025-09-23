@@ -1,0 +1,230 @@
+# URL Shortening Service Taskfile
+version: '3'
+
+vars:
+  BINARY_NAME: url-shortener
+  BINARY_UNIX: url-shortener_unix
+  DOCKER_IMAGE: url-shortener
+
+env:
+  CGO_ENABLED: 0
+
+tasks:
+  default:
+    desc: Show available tasks
+    cmd: task --list
+
+  # Build tasks
+  build:
+    desc: Build the application
+    cmd: go build -o {{.BINARY_NAME}} -v ./cmd/server
+    sources:
+      - "**/*.go"
+      - go.mod
+      - go.sum
+    generates:
+      - "{{.BINARY_NAME}}"
+
+  build:linux:
+    desc: Build for Linux
+    cmd: GOOS=linux GOARCH=amd64 go build -o {{.BINARY_UNIX}} -v ./cmd/server
+    env:
+      GOOS: linux
+      GOARCH: amd64
+    sources:
+      - "**/*.go"
+      - go.mod
+      - go.sum
+    generates:
+      - "{{.BINARY_UNIX}}"
+
+  # Development tasks
+  run:
+    desc: Build and run the application
+    deps: [build]
+    cmd: ./{{.BINARY_NAME}}
+
+  dev:
+    desc: Run with hot reload (requires air)
+    cmd: |
+      if ! command -v air &> /dev/null; then
+        echo "Installing air..."
+        go install github.com/cosmtrek/air@latest
+      fi
+      air
+    interactive: true
+
+  # Testing tasks
+  test:
+    desc: Run tests
+    cmd: go test -v ./...
+
+  test:coverage:
+    desc: Run tests with coverage
+    cmd: |
+      go test -v -coverprofile=coverage.out ./...
+      go tool cover -html=coverage.out -o coverage.html
+      echo "Coverage report generated: coverage.html"
+
+  test:unit:
+    desc: Run unit tests only
+    cmd: go test -v ./internal/...
+
+  test:integration:
+    desc: Run integration tests (requires running database)
+    cmd: go test -v ./test/...
+
+  # Dependency management
+  deps:
+    desc: Download and tidy dependencies
+    cmd: |
+      go mod download
+      go mod tidy
+
+  deps:upgrade:
+    desc: Upgrade all dependencies
+    cmd: |
+      go get -u ./...
+      go mod tidy
+
+  # Code quality tasks
+  fmt:
+    desc: Format code
+    cmd: |
+      go fmt ./...
+      echo "Code formatted"
+
+  lint:
+    desc: Run linter (requires golangci-lint)
+    cmd: |
+      if ! command -v golangci-lint &> /dev/null; then
+        echo "Installing golangci-lint..."
+        go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+      fi
+      golangci-lint run
+
+  vet:
+    desc: Run go vet
+    cmd: go vet ./...
+
+  check:
+    desc: Run all code quality checks
+    deps: [fmt, vet, lint, test]
+
+  # Clean tasks
+  clean:
+    desc: Clean build artifacts
+    cmd: |
+      go clean
+      rm -f {{.BINARY_NAME}}
+      rm -f {{.BINARY_UNIX}}
+      rm -f coverage.out
+      rm -f coverage.html
+      rm -rf tmp/
+
+  # Docker tasks
+  docker:build:
+    desc: Build Docker image
+    cmd: docker build -t {{.DOCKER_IMAGE}}:latest .
+
+  docker:run:
+    desc: Run with Docker Compose
+    cmd: docker-compose up --build
+
+  docker:up:
+    desc: Start services with Docker Compose
+    cmd: docker-compose up -d
+
+  docker:down:
+    desc: Stop Docker Compose services
+    cmd: docker-compose down
+
+  docker:logs:
+    desc: View Docker Compose logs
+    cmd: docker-compose logs -f
+
+  # Database tasks
+  db:up:
+    desc: Start PostgreSQL container
+    cmd: docker-compose up postgres -d
+
+  db:down:
+    desc: Stop PostgreSQL container
+    cmd: docker-compose stop postgres
+
+  db:logs:
+    desc: View PostgreSQL logs
+    cmd: docker-compose logs -f postgres
+
+  db:shell:
+    desc: Connect to PostgreSQL shell
+    cmd: docker-compose exec postgres psql -U postgres -d urlshortener
+
+  # Environment setup
+  env:
+    desc: Create .env file from example
+    cmd: |
+      if [ ! -f .env ]; then
+        cp .env.example .env
+        echo ".env file created from .env.example"
+        echo "Please edit .env with your configuration"
+      else
+        echo ".env file already exists"
+      fi
+
+  setup:
+    desc: Initial project setup
+    deps: [env, deps]
+    cmd: |
+      echo "Project setup complete!"
+      echo "Run 'task db:up' to start the database"
+      echo "Run 'task run' to start the application"
+
+  # Development tools installation
+  install:tools:
+    desc: Install development tools
+    cmd: |
+      echo "Installing development tools..."
+      go install github.com/cosmtrek/air@latest
+      go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+      echo "Development tools installed"
+
+  # Security tasks
+  security:check:
+    desc: Run security checks (requires govulncheck)
+    cmd: |
+      if ! command -v govulncheck &> /dev/null; then
+        echo "Installing govulncheck..."
+        go install golang.org/x/vuln/cmd/govulncheck@latest
+      fi
+      govulncheck ./...
+
+  # Release tasks
+  release:build:
+    desc: Build release binaries for multiple platforms
+    cmd: |
+      echo "Building release binaries..."
+      mkdir -p dist
+      
+      # Linux
+      GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o dist/{{.BINARY_NAME}}-linux-amd64 ./cmd/server
+      
+      # macOS
+      GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -o dist/{{.BINARY_NAME}}-darwin-amd64 ./cmd/server
+      GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w" -o dist/{{.BINARY_NAME}}-darwin-arm64 ./cmd/server
+      
+      # Windows
+      GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o dist/{{.BINARY_NAME}}-windows-amd64.exe ./cmd/server
+      
+      echo "Release binaries built in dist/ directory"
+
+  # Health check task
+  health:
+    desc: Check if the service is running and healthy
+    cmd: |
+      if curl -f http://localhost:8080/health > /dev/null 2>&1; then
+        echo "✅ Service is healthy"
+      else
+        echo "❌ Service is not responding"
+        exit 1
+      fi
