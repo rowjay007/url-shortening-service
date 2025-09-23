@@ -1,20 +1,43 @@
 # URL Shortening Service 🔗
 
+[![roadmap.sh](https://api.roadmap.sh/v1-badge/tall/65f4e3d5a5b3e5009a45ba97?variant=dark)](https://roadmap.sh/projects/url-shortening-service)
+
 A high-performance, enterprise-grade URL shortening service built with Go, Gin, and PocketBase. This service provides a robust RESTful API for shortening URLs, tracking statistics, and managing short codes with enterprise-level reliability and a built-in admin dashboard.
+
+**Project Link**: [roadmap.sh URL Shortening Service](https://roadmap.sh/projects/url-shortening-service)  
+**Author**: [@rowjay](https://github.com/rowjay)
 
 ## 🚀 Features
 
+### Core Functionality
 - **RESTful API**: Complete CRUD operations for URL shortening
-- **Unique Short Codes**: Cryptographically secure, collision-resistant base62 short codes
+- **Custom Short Codes**: Support for user-defined short codes with validation
+- **Auto-Generated Codes**: Cryptographically secure, collision-resistant base62 codes
 - **Statistics Tracking**: Real-time access count tracking with atomic updates
-- **Enterprise Architecture**: Clean architecture with proper separation of concerns
-- **Database Persistence**: PocketBase with SQLite backend and built-in admin UI
-- **Concurrency Safe**: Thread-safe operations with proper error handling
+- **URL Management**: Update, delete, and retrieve original URLs
+
+### Enterprise Architecture
+- **Clean Architecture**: Proper separation of concerns with layered design
+- **Service Interfaces**: Testable and mockable service layer
+- **Repository Pattern**: Abstracted data access layer
+- **Context-Aware Operations**: All operations support cancellation and timeouts
+- **Custom Error Types**: Structured error handling with proper HTTP status codes
+- **Request/Response DTOs**: Type-safe API contracts
+
+### Input Validation & Security
+- **URL Validation**: Comprehensive URL format and protocol validation
+- **Domain Blocking**: Configurable blocked domains list
+- **Input Sanitization**: Length limits and character validation
+- **Custom Code Validation**: Alphanumeric enforcement with length constraints
+- **Duplicate Prevention**: Unique constraint enforcement with proper error handling
+
+### Infrastructure & Operations
+- **PocketBase Integration**: SQLite backend with built-in admin UI
 - **Docker Support**: Complete containerization with Docker Compose
-- **Health Checks**: Built-in health monitoring endpoints
+- **Health Checks**: Built-in monitoring endpoints
+- **Structured Logging**: JSON logging with correlation IDs
+- **Configuration Management**: YAML-based configuration with environment overrides
 - **Middleware Stack**: Comprehensive logging, recovery, and CORS support
-- **Configuration Management**: Environment-based configuration system
-- **Unit Testing**: Comprehensive test coverage for critical components
 
 ## 📋 API Endpoints
 
@@ -43,16 +66,29 @@ A high-performance, enterprise-grade URL shortening service built with Go, Gin, 
 cmd/
 └── server/           # Application entrypoint
 internal/
-├── config/          # Configuration management
+├── config/          # Configuration management with YAML support
+├── constants/       # Application-wide constants
 ├── database/        # PocketBase client initialization
-├── handlers/        # HTTP request handlers (controllers)
-├── middleware/      # HTTP middleware (logging, recovery, CORS)
-├── models/         # Data models and DTOs
-├── repository/     # Data access layer
-├── services/       # Business logic layer
-└── utils/          # Utility functions (short code generation)
+├── dto/            # Data Transfer Objects (Request/Response models)
+├── errors/         # Custom error types with status codes
+├── handlers/       # HTTP request handlers (controllers)
+├── middleware/     # HTTP middleware (logging, recovery, CORS)
+├── models/         # Domain models and database entities
+├── repository/     # Data access layer with interfaces
+├── services/       # Business logic layer with interfaces
+├── utils/          # Utility functions (short code generation)
+└── validator/      # Input validation logic
 scripts/            # Database initialization scripts
 ```
+
+### Enterprise Design Patterns
+
+- **Repository Pattern**: Abstracted data access with interfaces
+- **Service Layer**: Business logic separation with dependency injection
+- **DTOs**: Type-safe request/response models
+- **Custom Errors**: Structured error handling with HTTP status mapping
+- **Context Propagation**: Request cancellation and timeout support
+- **Interface Segregation**: Small, focused interfaces for testability
 
 ## 🚦 Quick Start
 
@@ -114,21 +150,46 @@ scripts/            # Database initialization scripts
 
 ## 📝 API Usage Examples
 
-### Create Short URL
+### Create Short URL (Auto-Generated Code)
 ```bash
 curl -X POST http://localhost:8080/api/v1/shorten \
   -H "Content-Type: application/json" \
   -d '{"url": "https://example.com/very/long/url"}'
 ```
 
-**Response:**
+### Create Short URL (Custom Code)
+```bash
+curl -X POST http://localhost:8080/api/v1/shorten \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://github.com/golang/go", "customCode": "golang"}'
+```
+
+**Success Response:**
 ```json
 {
-  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "id": "nvhcs0aod9vczoj",
   "url": "https://example.com/very/long/url",
-  "shortCode": "xYz123",
-  "createdAt": "2025-09-22T12:00:00Z",
-  "updatedAt": "2025-09-22T12:00:00Z"
+  "shortCode": "RMfljg",
+  "createdAt": "2025-09-23T09:04:19.974Z",
+  "updatedAt": "2025-09-23T09:04:19.974Z"
+}
+```
+
+**Validation Error Response:**
+```json
+{
+  "error": "short code must be between 4 and 20 characters",
+  "message": "validator.ValidateShortCode: short code must be between 4 and 20 characters",
+  "code": 400
+}
+```
+
+**Duplicate Error Response:**
+```json
+{
+  "error": "short code already exists",
+  "message": "service.CreateShortURL: short code already exists",
+  "code": 409
 }
 ```
 
@@ -168,20 +229,39 @@ curl -X DELETE http://localhost:8080/api/v1/shorten/xYz123
 
 ## ⚙️ Configuration
 
-Configure the service using environment variables:
+Configure the service using `config.yaml`:
+
+```yaml
+pocket_base_url: "http://127.0.0.1:8090"
+jwt_secret: "your_jwt_secret_key"
+app_env: "development"
+cors_allowed_origins:
+  - "*"
+port: "8080"
+```
+
+Additional configuration via environment variables:
 
 ```env
-# PocketBase
-POCKETBASE_URL=http://localhost:8090
-
-# Server
+# Override YAML settings
+POCKET_BASE_URL=http://localhost:8090
 PORT=8080
 ENVIRONMENT=development
 
-# Short Code Generation
+# Application Constants (defined in code)
 SHORT_CODE_LENGTH=6
 MAX_RETRIES=5
+REQUEST_TIMEOUT=30s
+MAX_URL_LENGTH=2048
 ```
+
+### Validation Settings
+
+The service includes built-in validation:
+- **URL Length**: Maximum 2048 characters
+- **Custom Code Length**: 4-20 alphanumeric characters
+- **Blocked Domains**: Configurable in `internal/constants/constants.go`
+- **Request Timeout**: 30 seconds per operation
 
 ## 🧪 Testing
 
@@ -257,8 +337,15 @@ The service is ready for deployment to Azure App Service with:
 
 ## 🛣️ Future Enhancements
 
+### Completed ✅
+- [x] **Custom Short Codes**: User-defined short codes with validation
+- [x] **Input Validation**: Comprehensive URL and code validation
+- [x] **Enterprise Architecture**: Clean architecture with proper separation
+- [x] **Error Handling**: Structured error types with HTTP status codes
+- [x] **Context Support**: Request cancellation and timeout handling
+
+### Planned 🚧
 - [ ] **Expiration Management**: TTL for URLs with automatic cleanup
-- [ ] **Custom Short Codes**: Allow user-defined short codes
 - [ ] **Advanced Analytics**: IP tracking, geographic data, referrer tracking
 - [ ] **Authentication Integration**: Leverage PocketBase's built-in auth system
 - [ ] **Real-time Dashboard**: WebSocket-powered live analytics using PocketBase subscriptions
@@ -267,6 +354,8 @@ The service is ready for deployment to Azure App Service with:
 - [ ] **Batch Operations**: Bulk URL shortening API
 - [ ] **Web Interface**: Simple frontend for URL shortening
 - [ ] **Metrics & Monitoring**: Prometheus metrics integration
+- [ ] **A/B Testing**: Multiple short codes for the same URL
+- [ ] **QR Code Generation**: Generate QR codes for short URLs
 
 ## 📜 License
 
