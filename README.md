@@ -2,7 +2,7 @@
 
 [![roadmap.sh](https://api.roadmap.sh/v1-badge/tall/65f4e3d5a5b3e5009a45ba97?variant=dark)](https://roadmap.sh/projects/url-shortening-service)
 
-A high-performance, enterprise-grade URL shortening service built with Go, Gin, and PocketBase. This service provides a robust RESTful API for shortening URLs, tracking statistics, and managing short codes with enterprise-level reliability and a built-in admin dashboard.
+A high-performance URL shortening service built with Go, Gin, and PocketBase. This service provides a robust RESTful API for shortening URLs, tracking statistics, and managing short codes with a built-in admin dashboard.
 
 **Project Link**: [roadmap.sh URL Shortening Service](https://roadmap.sh/projects/url-shortening-service)  
 **Author**: [@rowjay](https://github.com/rowjay)
@@ -16,7 +16,7 @@ A high-performance, enterprise-grade URL shortening service built with Go, Gin, 
 - **Statistics Tracking**: Real-time access count tracking with atomic updates
 - **URL Management**: Update, delete, and retrieve original URLs
 
-### Enterprise Architecture
+### Architecture & Design
 - **Clean Architecture**: Proper separation of concerns with layered design
 - **Service Interfaces**: Testable and mockable service layer
 - **Repository Pattern**: Abstracted data access layer
@@ -81,7 +81,7 @@ internal/
 scripts/            # Database initialization scripts
 ```
 
-### Enterprise Design Patterns
+### Design Patterns
 
 - **Repository Pattern**: Abstracted data access with interfaces
 - **Service Layer**: Business logic separation with dependency injection
