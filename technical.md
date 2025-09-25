@@ -14,7 +14,7 @@ You'll learn how to structure a Go service using clean architecture principles, 
 
 ## From Prototype to Problem: The Hidden Costs of a 'Simple' Handler
 
-Let's start with the honest reality of a version one. The goal is to get a functional endpoint up and running as quickly as possible. Using a framework like Gin, it's tempting to put everything in one place. The result is often a handler that does far too much.
+The goal is to get a functional endpoint up and running as quickly as possible. Using a framework like Gin, it's tempting to put everything in one place. The result is often a handler that does far too much.
 
 Consider this initial `createShortURL` handler:
 
@@ -58,9 +58,9 @@ This code *works*, but it's an architectural dead end. Let's break down the spec
 
 This is the technical debt that cripples projects. The first step to paying it down is to establish clear boundaries. This isn't about adding unnecessary complexity; it's about creating a structure that enables future growth and maintainability.
 
-### The Refactored Handler: The Power of Delegation
+### The Power of Delegation
 
-Now, let's look at the refactored version of that same handler after applying a clean architecture. Notice what it *doesn't* do.
+Now, let's look at how we'll build that same handler using a clean architecture approach. Notice what it *doesn't* do.
 
 ```go
 func (h *URLHandler) CreateShortURL(c *gin.Context) {
