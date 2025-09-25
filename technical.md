@@ -765,21 +765,9 @@ These principles transform code into engineered systems—organized workshops wh
 
 We began with a familiar scenario: a monolithic handler that worked but couldn't scale. Through systematic application of clean architecture principles, we transformed it into a resilient, maintainable service. This transformation wasn't about adding complexity—it was about organizing complexity.
 
-The URL shortener now demonstrates six critical patterns that apply to any Go service:
+The URL shortener now demonstrates six critical patterns that apply to any Go service: domain isolation through service layers, interface-based contracts for testability, explicit API boundaries via DTOs, structured error handling for observability, centralized input validation for security, and context-aware operations for resilience.
 
-**Domain-Driven Design:** Business logic lives in services, isolated from frameworks and databases. This isolation enables testing, reuse, and technology migration without rewriting core functionality.
-
-**Interface-Based Contracts:** Every layer communicates through interfaces, creating testable seams and enabling dependency injection. Mock implementations allow fast, reliable unit tests.
-
-**Explicit API Boundaries:** DTOs separate external contracts from internal models, preventing breaking changes and information leakage while enabling independent evolution of APIs and database schemas.
-
-**Structured Error Handling:** Rich error types replace generic strings, providing diagnostic context for debugging and consistent HTTP responses for clients.
-
-**Centralized Input Validation:** The gatekeeper pattern ensures all external input meets security and business requirements before reaching core logic.
-
-**Context-Aware Operations:** Request lifecycle management prevents resource leaks and enables graceful handling of timeouts and cancellations.
-
-**Next Steps:** Apply these patterns incrementally to existing services. Start with error handling and input validation—they provide immediate value with minimal refactoring. Then introduce service interfaces and DTOs to create testable boundaries. The repository pattern comes last, as it requires the most architectural change but provides the greatest long-term flexibility.
+Apply these patterns incrementally to existing services. Start with error handling and input validation—they provide immediate value with minimal refactoring. Then introduce service interfaces and DTOs to create testable boundaries. The repository pattern comes last, as it requires the most architectural change but provides the greatest long-term flexibility.
 
 The goal isn't perfection from day one. It's building systems that can evolve safely, scale predictably, and welcome new contributors without archaeological expeditions through legacy code.
 
