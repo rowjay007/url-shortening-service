@@ -1,6 +1,6 @@
 # Go and PocketBase: Shortified!
 
-Every engineer has built a URL shortener—whether for learning, hackathons, or internal tooling. It's the perfect starter project: conceptually simple, quick to prototype, yet deceptively complex at scale.
+Whether you're building your first web service or your hundredth microservice, the URL shortener remains a compelling case study. It's conceptually simple, quick to prototype, yet deceptively complex at scale.
 
 Most tutorials stop at the basics: a single handler that accepts a URL, generates a random string, stores both in a database, and returns the short code. This works for demos, but what happens when that prototype becomes production-critical? When you need robust error handling, input validation, and graceful failure modes?
 
